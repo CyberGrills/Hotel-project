@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
@@ -114,6 +115,13 @@ export default function LoginPage() {
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
+
+        <div className="mt-6 border-t pt-5 text-center text-sm text-muted-foreground">
+          Don’t have an account?{' '}
+          <Link href="/signup" className="font-medium text-slate-900 hover:underline">
+            Create one
+          </Link>
+        </div>
       </div>
     </main>
   );
