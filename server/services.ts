@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 import type {
   Hotel,
   RoomType,
@@ -28,6 +28,7 @@ import { formatCentsCompact } from '@/lib/money';
 export const DEMO_HOTEL_ID = 'a0000000-0000-0000-0000-000000000001';
 
 export async function getHotel(hotelId: string = DEMO_HOTEL_ID): Promise<Hotel | null> {
+  const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('hotels')
     .select('*')
@@ -38,6 +39,7 @@ export async function getHotel(hotelId: string = DEMO_HOTEL_ID): Promise<Hotel |
 }
 
 export async function getRoomTypes(hotelId: string = DEMO_HOTEL_ID): Promise<RoomType[]> {
+  const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('room_types')
     .select('*')
@@ -51,6 +53,7 @@ export async function getInventoryForDate(
   hotelId: string,
   date: string,
 ): Promise<Inventory[]> {
+  const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('inventory')
     .select('*')
@@ -65,6 +68,7 @@ export async function getInventoryRange(
   startDate: string,
   endDate: string,
 ): Promise<Inventory[]> {
+  const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('inventory')
     .select('*')
@@ -77,6 +81,7 @@ export async function getInventoryRange(
 }
 
 export async function getReservationsForHotel(hotelId: string): Promise<Reservation[]> {
+  const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('reservations')
     .select('*')
@@ -90,6 +95,7 @@ export async function getActiveReservations(
   hotelId: string,
   date: string,
 ): Promise<Reservation[]> {
+  const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('reservations')
     .select('*')
@@ -104,6 +110,7 @@ export async function getActiveReservations(
 export async function getCancelledReservations(
   hotelId: string,
 ): Promise<Reservation[]> {
+  const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('reservations')
     .select('*')
@@ -119,6 +126,7 @@ export async function getForecast(
   hotelId: string,
   date: string,
 ): Promise<Forecast | null> {
+  const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('forecasts')
     .select('*')
@@ -134,6 +142,7 @@ export async function getForecastsRange(
   startDate: string,
   endDate: string,
 ): Promise<Forecast[]> {
+  const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('forecasts')
     .select('*')
@@ -149,6 +158,7 @@ export async function getDemandSignal(
   hotelId: string,
   date: string,
 ): Promise<DemandSignal | null> {
+  const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('demand_signals')
     .select('*')
@@ -162,6 +172,7 @@ export async function getDemandSignal(
 export async function getOpenOpportunities(
   hotelId: string = DEMO_HOTEL_ID,
 ): Promise<Opportunity[]> {
+  const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('opportunities')
     .select('*')
@@ -175,6 +186,7 @@ export async function getOpenOpportunities(
 export async function getAllOpportunities(
   hotelId: string = DEMO_HOTEL_ID,
 ): Promise<Opportunity[]> {
+  const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('opportunities')
     .select('*')
@@ -187,6 +199,7 @@ export async function getAllOpportunities(
 export async function getOpportunityById(
   opportunityId: string,
 ): Promise<Opportunity | null> {
+  const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('opportunities')
     .select('*')
@@ -199,6 +212,7 @@ export async function getOpportunityById(
 export async function getRecommendationForOpportunity(
   opportunityId: string,
 ): Promise<Recommendation | null> {
+  const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('hotel_recommendations')
     .select('*')
@@ -213,6 +227,7 @@ export async function getRecommendationForOpportunity(
 export async function getActionForOpportunity(
   opportunityId: string,
 ): Promise<ActionRecord | null> {
+  const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('actions')
     .select('*')
@@ -227,6 +242,7 @@ export async function getActionForOpportunity(
 export async function getOutcomeForAction(
   actionId: string,
 ): Promise<ActionOutcome | null> {
+  const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('action_outcomes')
     .select('*')
@@ -258,6 +274,7 @@ function dateStr(daysFromNow: number): string {
 export async function generateOpportunities(
   hotelId: string = DEMO_HOTEL_ID,
 ): Promise<Opportunity[]> {
+  const supabase = createServerSupabaseClient();
   const hotel = await getHotel(hotelId);
 
   if (!hotel) {
@@ -1034,6 +1051,7 @@ export async function generateOpportunities(
 export async function generateRecommendationForOpportunity(
   opportunityId: string,
 ): Promise<Recommendation | null> {
+  const supabase = createServerSupabaseClient();
   const opportunity = await getOpportunityById(opportunityId);
   if (!opportunity) return null;
 
@@ -1092,7 +1110,8 @@ export async function generateRecommendationForOpportunity(
 
 export async function simulateAction(
   opportunityId: string,
-): Promise<{ action: ActionRecord; outcome: ActionOutcome }> {
+): Promise<{
+  const supabase = createServerSupabaseClient(); action: ActionRecord; outcome: ActionOutcome }> {
   const opportunity = await getOpportunityById(opportunityId);
   if (!opportunity) throw new Error('Opportunity not found');
 
@@ -1198,6 +1217,7 @@ export async function resolveOpportunity(
   opportunityId: string,
   resolution: 'RESOLVED' | 'DISMISSED',
 ): Promise<void> {
+  const supabase = createServerSupabaseClient();
   const { error } = await supabase
     .from('opportunities')
     .update({
