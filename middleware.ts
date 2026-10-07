@@ -19,6 +19,8 @@ export async function middleware(request: NextRequest) {
 
   if (
     pathname === '/login' ||
+    pathname === '/signup' ||
+    pathname === '/auth/callback' ||
     pathname === '/install' ||
     pathname === '/manifest.webmanifest' ||
     pathname === '/sw.js' ||
