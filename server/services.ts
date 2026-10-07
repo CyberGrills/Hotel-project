@@ -1112,7 +1112,10 @@ export async function generateRecommendationForOpportunity(
 export async function simulateAction(
   opportunityId: string,
 ): Promise<{
-  const supabase = createServerSupabaseClient(); action: ActionRecord; outcome: ActionOutcome }> {
+  action: ActionRecord;
+  outcome: ActionOutcome;
+}> {
+  const supabase = createServerSupabaseClient();
   const opportunity = await getOpportunityById(opportunityId);
   if (!opportunity) throw new Error('Opportunity not found');
 
