@@ -11,8 +11,16 @@ export function calculateOccupancy(inventory: Inventory[]): OccupancyResult {
   const totalRooms = inventory.reduce((sum, i) => sum + i.total_rooms, 0);
   const soldRooms = inventory.reduce((sum, i) => sum + i.sold_rooms, 0);
   const availableRooms = inventory.reduce((sum, i) => sum + i.available_rooms, 0);
-  const occupancyPct = totalRooms > 0 ? (soldRooms / totalRooms) * 100 : 0;
-  return { occupancyPct, soldRooms, totalRooms, availableRooms };
+
+  const occupancyPct =
+    totalRooms > 0 ? (soldRooms / totalRooms) * 100 : 0;
+
+  return {
+    occupancyPct,
+    soldRooms,
+    totalRooms,
+    availableRooms,
+  };
 }
 
 export interface ADRResult {
@@ -21,17 +29,32 @@ export interface ADRResult {
   roomNights: number;
 }
 
-export function calculateADR(reservations: Reservation[], date: string): ADRResult {
+export function calculateADR(
+  reservations: Reservation[],
+  date: string,
+): ADRResult {
   const activeOnDate = reservations.filter(
     (r) =>
       r.status !== 'CANCELLED' &&
       r.check_in_date <= date &&
       r.check_out_date > date,
   );
+
   const roomNights = activeOnDate.length;
-  const totalRevenue = activeOnDate.reduce((sum, r) => sum + r.rate_per_night_cents, 0);
-  const adr = roomNights > 0 ? Math.round(totalRevenue / roomNights) : 0;
-  return { adr, totalRevenue, roomNights };
+
+  const totalRevenue = activeOnDate.reduce(
+    (sum, r) => sum + r.rate_per_night_cents,
+    0,
+  );
+
+  const adr =
+    roomNights > 0 ? Math.round(totalRevenue / roomNights) : 0;
+
+  return {
+    adr,
+    totalRevenue,
+    roomNights,
+  };
 }
 
 export interface RoomRevenueResult {
@@ -45,9 +68,19 @@ export function calculateRoomRevenue(
   date: string,
 ): RoomRevenueResult {
   const { totalRevenue } = calculateADR(reservations, date);
-  const totalRooms = inventory.reduce((sum, i) => sum + i.total_rooms, 0);
-  const perAvailableRoom = totalRooms > 0 ? Math.round(totalRevenue / totalRooms) : 0;
-  return { roomRevenue: totalRevenue, perAvailableRoom };
+
+  const totalRooms = inventory.reduce(
+    (sum, i) => sum + i.total_rooms,
+    0,
+  );
+
+  const perAvailableRoom =
+    totalRooms > 0 ? Math.round(totalRevenue / totalRooms) : 0;
+
+  return {
+    roomRevenue: totalRevenue,
+    perAvailableRoom,
+  };
 }
 
 export interface BookingPaceResult {
@@ -69,16 +102,32 @@ export function calculateBookingPace(
       r.check_in_date <= targetDate &&
       r.check_out_date > targetDate,
   );
+
   const cumulativeBookings = activeOnDate.length;
-  const expectedPace = Math.round((totalRooms * expectedOccupancyPct) / 100);
+
+  const expectedPace = Math.round(
+    (totalRooms * expectedOccupancyPct) / 100,
+  );
+
   const paceVariancePct =
-    expectedPace > 0 ? ((cumulativeBookings - expectedPace) / expectedPace) * 100 : 0;
+    expectedPace > 0
+      ? ((cumulativeBookings - expectedPace) / expectedPace) * 100
+      : 0;
 
   let status: BookingPaceResult['status'] = 'NORMAL';
-  if (paceVariancePct < -10) status = 'UNDER_DEMANDED';
-  else if (paceVariancePct > 10) status = 'OVER_DEMANDED';
 
-  return { cumulativeBookings, expectedPace, paceVariancePct, status };
+  if (paceVariancePct < -10) {
+    status = 'UNDER_DEMANDED';
+  } else if (paceVariancePct > 10) {
+    status = 'OVER_DEMANDED';
+  }
+
+  return {
+    cumulativeBookings,
+    expectedPace,
+    paceVariancePct,
+    status,
+  };
 }
 
 export interface ExpectedOccupancyResult {
@@ -98,6 +147,7 @@ export function calculateExpectedOccupancy(
       primaryCause: forecast.primary_cause ?? 'Forecast model',
     };
   }
+
   return {
     expectedOccupancyPct: historicalOccupancyPct,
     confidencePct: 60,
@@ -117,36 +167,76 @@ export function calculateInventoryRisk(
   expectedOccupancyPct: number,
   date: string,
 ): InventoryRiskResult {
-  const totalRooms = inventory.reduce((sum, i) => sum + i.total_rooms, 0);
-  const soldRooms = inventory.reduce((sum, i) => sum + i.sold_rooms, 0);
-  const expectedSold = Math.round((totalRooms * expectedOccupancyPct) / 100);
-  const roomsAtRisk = Math.max(0, totalRooms - soldRooms - 2);
+  const totalRooms = inventory.reduce(
+    (sum, item) =>
+      sum + item.total_rooms,
+    0,
+  );
 
-  const expectedUnsold = Math.max(0, totalRooms - expectedSold);
-  const actualUnsold = totalRooms - soldRooms;
-  const riskGap = Math.max(0, actualUnsold - expectedUnsold);
+  const soldRooms = inventory.reduce(
+    (sum, item) =>
+      sum + item.sold_rooms,
+    0,
+  );
 
-  const riskPct = totalRooms > 0 ? (riskGap / totalRooms) * 100 : 0;
+  const expectedSold = Math.round(
+    (totalRooms *
+      expectedOccupancyPct) /
+      100,
+  );
 
-  let severity: InventoryRiskResult['severity'] = 'NONE';
-  if (riskGap >= 20) severity = 'CRITICAL';
-  else if (riskGap >= 12) severity = 'HIGH';
-  else if (riskGap >= 6) severity = 'MEDIUM';
-  else if (riskGap >= 2) severity = 'LOW';
+  const riskGap = Math.max(
+    0,
+    expectedSold - soldRooms,
+  );
+
+  const roomsAtRisk = riskGap;
+
+  const riskPct =
+    totalRooms > 0
+      ? (riskGap / totalRooms) * 100
+      : 0;
+
+  let severity: InventoryRiskResult["severity"] =
+    "NONE";
+
+  if (riskGap >= 20) {
+    severity = "CRITICAL";
+  } else if (riskGap >= 12) {
+    severity = "HIGH";
+  } else if (riskGap >= 6) {
+    severity = "MEDIUM";
+  } else if (riskGap >= 2) {
+    severity = "LOW";
+  }
+
+  const currentOccupancyPct =
+    totalRooms > 0
+      ? (soldRooms / totalRooms) * 100
+      : 0;
 
   const reason =
     riskGap > 0
-      ? `${riskGap} rooms likely to remain unsold on ${date}. Current bookings are ${Math.round(
-          100 - (soldRooms / totalRooms) * 100,
-        )}% unsold vs expected ${Math.round(100 - expectedOccupancyPct)}%.`
+      ? `${riskGap} rooms are below the expected booking position for ${date}. Current occupancy is ${Math.round(
+          currentOccupancyPct,
+        )}% vs expected ${Math.round(
+          expectedOccupancyPct,
+        )}%.`
       : `Inventory is pacing normally for ${date}.`;
 
-  return { roomsAtRisk, riskPct, severity, reason };
+  return {
+    roomsAtRisk,
+    riskPct,
+    severity,
+    reason,
+  };
 }
 
 export interface OpportunityValueResult {
   expectedValueCents: number;
   estimatedCostCents: number;
+  expectedNetValueCents: number;
+  roomsLikelySold: number;
   roomsAffected: number;
   ratePerRoomCents: number;
 }
@@ -155,17 +245,63 @@ export function calculateOpportunityValue(
   roomsAtRisk: number,
   avgRateCents: number,
   confidencePct: number,
+  conversionPct: number = 70,
   acquisitionCostPctOfRevenue: number = 12,
 ): OpportunityValueResult {
-  const confidenceFactor = confidencePct / 100;
-  const roomsLikelySold = Math.round(roomsAtRisk * confidenceFactor * 0.7);
-  const expectedValueCents = roomsLikelySold * avgRateCents;
-  const estimatedCostCents = Math.round(expectedValueCents * (acquisitionCostPctOfRevenue / 100));
+  const confidenceFactor =
+    Math.max(
+      0,
+      Math.min(100, confidencePct),
+    ) / 100;
+
+  const conversionFactor =
+    Math.max(
+      0,
+      Math.min(100, conversionPct),
+    ) / 100;
+
+  const roomsLikelySold = Math.max(
+    0,
+    Math.round(
+      roomsAtRisk *
+        confidenceFactor *
+        conversionFactor,
+    ),
+  );
+
+  const expectedValueCents =
+    roomsLikelySold *
+    Math.max(0, avgRateCents);
+
+  const estimatedCostCents =
+    Math.round(
+      expectedValueCents *
+        (Math.max(
+          0,
+          acquisitionCostPctOfRevenue,
+        ) / 100),
+    );
+
+  const expectedNetValueCents =
+    Math.max(
+      0,
+      expectedValueCents -
+        estimatedCostCents,
+    );
+
   return {
     expectedValueCents,
     estimatedCostCents,
-    roomsAffected: roomsAtRisk,
-    ratePerRoomCents: avgRateCents,
+    expectedNetValueCents,
+    roomsLikelySold,
+    roomsAffected: Math.max(
+      0,
+      roomsAtRisk,
+    ),
+    ratePerRoomCents: Math.max(
+      0,
+      avgRateCents,
+    ),
   };
 }
 
@@ -180,12 +316,15 @@ export function calculateAcquisitionCost(
   channelCommissionBps: number,
   marketingCostCents: number = 0,
 ): AcquisitionCostResult {
-  const commissionCents = Math.round((revenueCents * channelCommissionBps) / 10000);
-  const acquisitionCostCents = marketingCostCents;
+  const commissionCents = Math.round(
+    (revenueCents * channelCommissionBps) / 10000,
+  );
+
   return {
-    acquisitionCostCents,
+    acquisitionCostCents: marketingCostCents,
     commissionCents,
-    totalCostCents: acquisitionCostCents + commissionCents,
+    totalCostCents:
+      marketingCostCents + commissionCents,
   };
 }
 
@@ -203,9 +342,16 @@ export function calculateNetRevenue(
   cancellationLossCents: number = 0,
 ): NetRevenueResult {
   const totalCosts =
-    acquisitionCostCents + commissionCents + discountCostCents + cancellationLossCents;
-  const netRevenue = grossRevenueCents - totalCosts;
-  return { netRevenue, grossRevenue: grossRevenueCents, totalCosts };
+    acquisitionCostCents +
+    commissionCents +
+    discountCostCents +
+    cancellationLossCents;
+
+  return {
+    netRevenue: grossRevenueCents - totalCosts,
+    grossRevenue: grossRevenueCents,
+    totalCosts,
+  };
 }
 
 export interface DemandStatusResult {
@@ -222,17 +368,39 @@ export function calculateDemandStatus(
   demandSignal: DemandSignal | null,
 ): DemandStatusResult {
   const { occupancyPct } = calculateOccupancy(inventory);
-  const expectedOccupancy = forecast?.expected_occupancy_pct ?? occupancyPct;
-  const confidence = forecast?.confidence_pct ?? 60;
-  const primaryCause = forecast?.primary_cause ?? 'Historical pattern';
-  const recommendedResponse = forecast?.recommended_response ?? 'Monitor and adjust as needed';
 
-  const variance = expectedOccupancy - occupancyPct;
-  let status: DemandStatusResult['status'] = 'NORMAL';
-  if (variance > 15) status = 'UNDER_DEMANDED';
-  else if (variance < -10) status = 'OVER_DEMANDED';
+  const expectedOccupancy =
+    forecast?.expected_occupancy_pct ?? occupancyPct;
 
-  return { status, expectedOccupancy, confidence, primaryCause, recommendedResponse };
+  const confidence =
+    forecast?.confidence_pct ?? 60;
+
+  const primaryCause =
+    forecast?.primary_cause ?? 'Historical pattern';
+
+  const recommendedResponse =
+    forecast?.recommended_response ??
+    'Monitor and adjust as needed';
+
+  const variance =
+    expectedOccupancy - occupancyPct;
+
+  let status: DemandStatusResult['status'] =
+    'NORMAL';
+
+  if (variance > 15) {
+    status = 'UNDER_DEMANDED';
+  } else if (variance < -10) {
+    status = 'OVER_DEMANDED';
+  }
+
+  return {
+    status,
+    expectedOccupancy,
+    confidence,
+    primaryCause,
+    recommendedResponse,
+  };
 }
 
 export interface ActionOutcomeResult {
@@ -257,28 +425,66 @@ export function calculateActionOutcome(
   discountPct: number = 0,
   cancellationRatePct: number = 5,
 ): ActionOutcomeResult {
-  const roomsSold = Math.round(roomsTargeted * expectedConversionRate);
-  const grossRevenueCents = roomsSold * ratePerNightCents * avgNights;
-  const discountCostCents = Math.round(grossRevenueCents * (discountPct / 100));
-  const channelCommissionCents = Math.round(
-    ((grossRevenueCents - discountCostCents) * channelCommissionBps) / 10000,
+  const safeConversionRate = Math.max(
+    0,
+    Math.min(1, expectedConversionRate),
   );
-  const acquisitionCostCents = roomsSold * acquisitionCostPerRoomCents;
+
+  const roomsSold = Math.min(
+    roomsTargeted,
+    Math.max(
+      0,
+      Math.round(
+        roomsTargeted * safeConversionRate,
+      ),
+    ),
+  );
+
+  const grossRevenueCents =
+    roomsSold *
+    ratePerNightCents *
+    avgNights;
+
+  const discountCostCents = Math.round(
+    grossRevenueCents *
+      (discountPct / 100),
+  );
+
+  const revenueAfterDiscount =
+    grossRevenueCents - discountCostCents;
+
+  const channelCommissionCents = Math.round(
+    (revenueAfterDiscount *
+      channelCommissionBps) /
+      10000,
+  );
+
+  const acquisitionCostCents =
+    roomsSold * acquisitionCostPerRoomCents;
+
   const cancellationLossCents = Math.round(
-    (grossRevenueCents - discountCostCents) * (cancellationRatePct / 100),
+    revenueAfterDiscount *
+      (cancellationRatePct / 100),
   );
 
   const netIncrementalRevenueCents =
-    grossRevenueCents -
+    revenueAfterDiscount -
     acquisitionCostCents -
     channelCommissionCents -
-    discountCostCents -
     cancellationLossCents;
 
-  let outcome: ActionOutcomeResult['outcome'] = 'NO_IMPACT';
-  if (roomsSold >= roomsTargeted * 0.7 && netIncrementalRevenueCents > 0) {
+  let outcome: ActionOutcomeResult['outcome'] =
+    'NO_IMPACT';
+
+  if (
+    roomsSold >= roomsTargeted * 0.7 &&
+    netIncrementalRevenueCents > 0
+  ) {
     outcome = 'SUCCESS';
-  } else if (roomsSold > 0 && netIncrementalRevenueCents > 0) {
+  } else if (
+    roomsSold > 0 &&
+    netIncrementalRevenueCents > 0
+  ) {
     outcome = 'PARTIAL';
   } else if (roomsSold === 0) {
     outcome = 'NO_IMPACT';
@@ -286,9 +492,10 @@ export function calculateActionOutcome(
     outcome = 'FAILURE';
   }
 
-  const notes = `${roomsSold} of ${roomsTargeted} targeted rooms sold. Gross revenue generated with ${discountPct}% discount through ${
-    channelCommissionBps > 0 ? 'OTA channel' : 'direct channel'
-  }.`;
+  const notes =
+    `${roomsSold} of ${roomsTargeted} targeted rooms sold. ` +
+    `Gross revenue ${grossRevenueCents} minor units; ` +
+    `net incremental revenue ${netIncrementalRevenueCents} minor units.`;
 
   return {
     roomsSold,

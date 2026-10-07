@@ -26,9 +26,12 @@ function dateStr(daysFromNow: number): string {
   return d.toISOString().split('T')[0];
 }
 
-export async function GET() {
+export async function GET(
+  _request: Request,
+  { params }: { params: { hotelId: string } },
+) {
   try {
-    const hotelId = DEMO_HOTEL_ID;
+    const hotelId = params.hotelId || DEMO_HOTEL_ID;
     const hotel = await getHotel(hotelId);
     if (!hotel) {
       return NextResponse.json(
@@ -58,7 +61,7 @@ export async function GET() {
     const adr = calculateADR(reservations, today);
 
     // Generate opportunities from current data
-    const opportunities = await generateOpportunities(hotelId);
+    await generateOpportunities(hotelId);
     const openOpps = await getOpenOpportunities(hotelId);
 
     // Occupancy trend (14 days)
@@ -121,7 +124,16 @@ export async function GET() {
       priorityMessage = `${openOpps.length} opportunities available. Review and act on medium-priority items.`;
     }
 
-    const potentialRevenue = openOpps.reduce((s, o) => s + o.expected_value_cents, 0);
+    const potentialRevenue = openOpps.reduce(
+      (sum, opportunity) =>
+        sum +
+        Math.max(
+          0,
+          opportunity.expected_value_cents -
+            opportunity.estimated_cost_cents,
+        ),
+      0,
+    );
 
     const dashboardData: DashboardData = {
       hotel,

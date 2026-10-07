@@ -76,7 +76,7 @@ export default function DashboardPage() {
         />
         <MetricCard
           label="Average Daily Rate"
-          value={formatCents(data.adr, 'USD')}
+          value={formatCents(data.adr, data.hotel.currency)}
           sublabel="Across all active reservations"
           icon="adr"
         />
