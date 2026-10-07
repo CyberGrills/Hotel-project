@@ -37,12 +37,9 @@ revoke all on table public.hotels, public.room_types, public.rate_plans, public.
   public.opportunities, public.hotel_recommendations, public.actions, public.action_outcomes
 from anon, authenticated;
 
-grant select, insert, update on table public.hotels, public.room_types, public.rate_plans,
-  public.channels, public.inventory, public.reservations, public.demand_signals,
-  public.forecasts, public.opportunities, public.hotel_recommendations, public.actions,
-  public.action_outcomes
+grant select, update on table public.hotels to authenticated;
+grant select, insert, update on table public.room_types, public.rate_plans, public.channels,
+  public.inventory, public.reservations, public.demand_signals, public.forecasts,
+  public.opportunities, public.hotel_recommendations, public.actions, public.action_outcomes
 to authenticated;
 
-insert into public.hotel_members (hotel_id,user_id,role)
-values ('a0000000-0000-0000-0000-000000000001'::uuid,'92f7338d-b893-451a-84e9-6090c1a36009'::uuid,'owner')
-on conflict (hotel_id,user_id) do update set role='owner';
