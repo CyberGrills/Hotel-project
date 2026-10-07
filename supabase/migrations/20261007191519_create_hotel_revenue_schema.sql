@@ -203,7 +203,7 @@ CREATE TABLE IF NOT EXISTS opportunities (
 -- ============================================================
 -- 10. RECOMMENDATIONS
 -- ============================================================
-CREATE TABLE IF NOT EXISTS recommendations (
+CREATE TABLE IF NOT EXISTS hotel_recommendations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   opportunity_id uuid NOT NULL REFERENCES opportunities(id) ON DELETE CASCADE,
   hotel_id uuid NOT NULL REFERENCES hotels(id) ON DELETE CASCADE,
@@ -226,7 +226,7 @@ CREATE TABLE IF NOT EXISTS actions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   opportunity_id uuid NOT NULL REFERENCES opportunities(id) ON DELETE CASCADE,
   hotel_id uuid NOT NULL REFERENCES hotels(id) ON DELETE CASCADE,
-  recommendation_id uuid REFERENCES recommendations(id) ON DELETE SET NULL,
+  recommendation_id uuid REFERENCES hotel_recommendations(id) ON DELETE SET NULL,
   action_type text NOT NULL,
   parameters jsonb NOT NULL DEFAULT '{}'::jsonb,
   status text NOT NULL DEFAULT 'PENDING',
@@ -271,7 +271,7 @@ CREATE INDEX IF NOT EXISTS idx_forecasts_hotel_date ON forecasts(hotel_id, busin
 CREATE INDEX IF NOT EXISTS idx_opportunities_hotel ON opportunities(hotel_id);
 CREATE INDEX IF NOT EXISTS idx_opportunities_status ON opportunities(status);
 CREATE INDEX IF NOT EXISTS idx_opportunities_hotel_status ON opportunities(hotel_id, status);
-CREATE INDEX IF NOT EXISTS idx_recommendations_opportunity ON recommendations(opportunity_id);
+CREATE INDEX IF NOT EXISTS idx_hotel_recommendations_opportunity ON hotel_recommendations(opportunity_id);
 CREATE INDEX IF NOT EXISTS idx_actions_opportunity ON actions(opportunity_id);
 CREATE INDEX IF NOT EXISTS idx_action_outcomes_action ON action_outcomes(action_id);
 
@@ -287,7 +287,7 @@ ALTER TABLE reservations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE demand_signals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE forecasts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE opportunities ENABLE ROW LEVEL SECURITY;
-ALTER TABLE recommendations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE hotel_recommendations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE actions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE action_outcomes ENABLE ROW LEVEL SECURITY;
 
@@ -367,12 +367,12 @@ DROP POLICY IF EXISTS "anon_update_opportunities" ON opportunities;
 CREATE POLICY "anon_update_opportunities" ON opportunities FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
 
 -- Recommendations
-DROP POLICY IF EXISTS "anon_read_recommendations" ON recommendations;
-CREATE POLICY "anon_read_recommendations" ON recommendations FOR SELECT TO anon, authenticated USING (true);
-DROP POLICY IF EXISTS "anon_write_recommendations" ON recommendations;
-CREATE POLICY "anon_write_recommendations" ON recommendations FOR INSERT TO anon, authenticated WITH CHECK (true);
-DROP POLICY IF EXISTS "anon_update_recommendations" ON recommendations;
-CREATE POLICY "anon_update_recommendations" ON recommendations FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_read_recommendations" ON hotel_recommendations;
+CREATE POLICY "anon_read_recommendations" ON hotel_recommendations FOR SELECT TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "anon_write_recommendations" ON hotel_recommendations;
+CREATE POLICY "anon_write_recommendations" ON hotel_recommendations FOR INSERT TO anon, authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_update_recommendations" ON hotel_recommendations;
+CREATE POLICY "anon_update_recommendations" ON hotel_recommendations FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
 
 -- Actions
 DROP POLICY IF EXISTS "anon_read_actions" ON actions;
