@@ -253,6 +253,7 @@ export async function getOutcomeForAction(
 }
 
 export async function getChannels(hotelId: string = DEMO_HOTEL_ID) {
+  const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('channels')
     .select('*')
