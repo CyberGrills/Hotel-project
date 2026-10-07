@@ -2,8 +2,19 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useRouter } from 'next/navigation';
+import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 export default function SettingsPage() {
+  const router = useRouter();
+
+  async function handleSignOut() {
+    const supabase = createBrowserSupabaseClient();
+    await supabase.auth.signOut();
+    router.replace('/login');
+    router.refresh();
+  }
+
   return (
     <div className="space-y-6 p-6 lg:p-8 max-w-[800px]">
       <div>
@@ -58,8 +69,23 @@ export default function SettingsPage() {
             <Badge variant="secondary">Not connected</Badge>
           </div>
           <p className="text-xs text-muted-foreground pt-2 border-t">
-            Integrations will be added in future phases. The system currently operates in demo mode with seeded data.
+            Integrations will be added in future phases. Initial hotel data is seeded for the current property and remains protected by hotel membership access controls.
           </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Session</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-slate-50"
+          >
+            Sign out
+          </button>
         </CardContent>
       </Card>
     </div>
