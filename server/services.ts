@@ -200,7 +200,7 @@ export async function getRecommendationForOpportunity(
   opportunityId: string,
 ): Promise<Recommendation | null> {
   const { data, error } = await supabase
-    .from('recommendations')
+    .from('hotel_recommendations')
     .select('*')
     .eq('opportunity_id', opportunityId)
     .order('created_at', { ascending: false })
@@ -1065,7 +1065,7 @@ export async function generateRecommendationForOpportunity(
   });
 
   const { data, error } = await supabase
-    .from('recommendations')
+    .from('hotel_recommendations')
     .insert({
       opportunity_id: opportunityId,
       hotel_id: opportunity.hotel_id,
