@@ -11,9 +11,17 @@ export default function InstallPage() {
     const media = window.matchMedia("(display-mode: standalone)");
     setInstalled(media.matches);
 
-    const handler = () => setCanInstall(true);
+    const handler = (event: Event) => {
+      const promptEvent = event as Event & { prompt?: () => Promise<void> };
+      (window as Window & { deferredPrompt?: Event & { prompt?: () => Promise<void> } }).deferredPrompt = promptEvent;
+      setCanInstall(true);
+    };
 
     window.addEventListener("beforeinstallprompt", handler);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+    };
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handler);
