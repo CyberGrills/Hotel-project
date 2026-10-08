@@ -25,9 +25,7 @@ import {
 import { generateRecommendation } from '@/lib/recommendations';
 import { formatCentsCompact } from '@/lib/money';
 
-export const DEMO_HOTEL_ID = 'a0000000-0000-0000-0000-000000000001';
-
-export async function getHotel(hotelId: string = DEMO_HOTEL_ID): Promise<Hotel | null> {
+export async function getHotel(hotelId: string): Promise<Hotel | null> {
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('hotels')
@@ -38,7 +36,7 @@ export async function getHotel(hotelId: string = DEMO_HOTEL_ID): Promise<Hotel |
   return data as Hotel | null;
 }
 
-export async function getRoomTypes(hotelId: string = DEMO_HOTEL_ID): Promise<RoomType[]> {
+export async function getRoomTypes(hotelId: string): Promise<RoomType[]> {
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('room_types')
@@ -170,7 +168,7 @@ export async function getDemandSignal(
 }
 
 export async function getOpenOpportunities(
-  hotelId: string = DEMO_HOTEL_ID,
+  hotelId: string,
 ): Promise<Opportunity[]> {
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
@@ -184,7 +182,7 @@ export async function getOpenOpportunities(
 }
 
 export async function getAllOpportunities(
-  hotelId: string = DEMO_HOTEL_ID,
+  hotelId: string,
 ): Promise<Opportunity[]> {
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
@@ -252,7 +250,7 @@ export async function getOutcomeForAction(
   return data as ActionOutcome | null;
 }
 
-export async function getChannels(hotelId: string = DEMO_HOTEL_ID) {
+export async function getChannels(hotelId: string) {
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('channels')
@@ -273,7 +271,7 @@ function dateStr(daysFromNow: number): string {
 }
 
 export async function generateOpportunities(
-  hotelId: string = DEMO_HOTEL_ID,
+  hotelId: string,
 ): Promise<Opportunity[]> {
   const supabase = createServerSupabaseClient();
   const hotel = await getHotel(hotelId);
