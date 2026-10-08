@@ -10,10 +10,11 @@ import { ChannelChart } from '@/components/charts/channel-chart';
 import { LoadingState, ErrorState, EmptyState } from '@/components/dashboard/states';
 import { formatCents, formatCentsCompact } from '@/lib/money';
 import { Target, Sparkles, AlertTriangle } from 'lucide-react';
-import type { DashboardData } from '@/types';
+import type { DashboardData, Hotel } from '@/types';
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
+  const [hotels, setHotels] = useState<Hotel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,7 +22,20 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/hotels/a0000000-0000-0000-0000-000000000001/dashboard');
+      const hotelsRes = await fetch('/api/hotels', { cache: 'no-store' });
+      if (!hotelsRes.ok) throw new Error(`HTTP ${hotelsRes.status}`);
+      const hotelsJson = await hotelsRes.json();
+      if (hotelsJson.error) throw new Error(hotelsJson.error.message);
+      const accessibleHotels = (hotelsJson.data || []) as Hotel[];
+      setHotels(accessibleHotels);
+      if (accessibleHotels.length === 0) {
+        setData(null);
+        return;
+      }
+      const savedHotelId = window.localStorage.getItem('apren.activeHotelId');
+      const activeHotel = accessibleHotels.find((hotel) => hotel.id === savedHotelId) || accessibleHotels[0];
+      window.localStorage.setItem('apren.activeHotelId', activeHotel.id);
+      const res = await fetch(`/api/hotels/${activeHotel.id}/dashboard`, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       if (json.error) throw new Error(json.error.message);
@@ -39,6 +53,7 @@ export default function DashboardPage() {
 
   if (loading) return <LoadingState label="Analyzing hotel data…" className="min-h-[60vh]" />;
   if (error) return <ErrorState message={error} onRetry={fetchData} className="min-h-[60vh]" />;
+  if (hotels.length === 0) return <EmptyState title="Hotel access is not configured" description="Your account is authenticated, but it is not a member of any hotel property yet. Ask a hotel owner or manager to grant your account access." className="min-h-[60vh]" />;
   if (!data) return <EmptyState title="No data available" className="min-h-[60vh]" />;
 
   const highSeverity = data.opportunities.filter((o) => o.severity === 'CRITICAL' || o.severity === 'HIGH');
