@@ -20,25 +20,43 @@ export default function ReservationsPage() {
     setLoading(true);
     setError(null);
     try {
+      const hotelsRes = await fetch('/api/hotels', { cache: 'no-store' });
+      if (!hotelsRes.ok) throw new Error(`HTTP ${hotelsRes.status}`);
+      const hotelsJson = await hotelsRes.json();
+      if (hotelsJson.error) throw new Error(hotelsJson.error.message);
+
+      const hotels = hotelsJson.data || [];
+      if (!hotels.length) {
+        setReservations([]);
+        setRoomTypes([]);
+        setChannels([]);
+        return;
+      }
+
+      const savedHotelId = window.localStorage.getItem('apren.activeHotelId');
+      const activeHotel = hotels.find((hotel: { id: string }) => hotel.id === savedHotelId) || hotels[0];
+      window.localStorage.setItem('apren.activeHotelId', activeHotel.id);
+
       const { data: resData, error: resErr } = await supabase
         .from('reservations')
         .select('*')
-        .eq('hotel_id', 'a0000000-0000-0000-0000-000000000001')
+        .eq('hotel_id', activeHotel.id)
         .order('check_in_date', { ascending: false })
         .limit(50);
-
       if (resErr) throw resErr;
 
-      const { data: rtData } = await supabase
+      const { data: rtData, error: rtErr } = await supabase
         .from('room_types')
         .select('*')
-        .eq('hotel_id', 'a0000000-0000-0000-0000-000000000001');
+        .eq('hotel_id', activeHotel.id);
+      if (rtErr) throw rtErr;
       setRoomTypes(rtData || []);
 
-      const { data: chData } = await supabase
+      const { data: chData, error: chErr } = await supabase
         .from('channels')
         .select('*')
-        .eq('hotel_id', 'a0000000-0000-0000-0000-000000000001');
+        .eq('hotel_id', activeHotel.id);
+      if (chErr) throw chErr;
       setChannels(chData || []);
 
       setReservations((resData || []) as Reservation[]);
