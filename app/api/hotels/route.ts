@@ -1,20 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getHotel } from '@/server/services';
-import type { Hotel } from '@/types';
+import { getAccessibleHotels } from '@/server/hotels';
 
 export async function GET() {
   try {
-    const hotel = await getHotel();
-    if (!hotel) {
-      return NextResponse.json(
-        { data: null, error: { code: 'HOTEL_NOT_FOUND', message: 'Hotel not found' } },
-        { status: 404 },
-      );
-    }
-    return NextResponse.json({ data: hotel as Hotel, error: null });
-  } catch {
+    return NextResponse.json({ data: await getAccessibleHotels(), error: null });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to fetch accessible hotels';
     return NextResponse.json(
-      { data: null, error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch hotel' } },
+      { data: null, error: { code: 'HOTELS_ERROR', message } },
       { status: 500 },
     );
   }
