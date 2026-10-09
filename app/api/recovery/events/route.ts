@@ -210,7 +210,7 @@ export async function GET(request: Request) {
     if (existing.abandonmentReason === null && event.abandonment_reason) {
       existing.abandonmentReason = event.abandonment_reason;
     }
-    existing.contactConsent = existing.contactConsent || event.contact_consent;
+    // Consent is taken from the latest event only; an older opt-in must not override a later opt-out.
     existing.isAbandoned = existing.isAbandoned || event.event_type === 'abandon';
     existing.isConfirmed = existing.isConfirmed || event.event_type === 'booking_confirmed';
   }
