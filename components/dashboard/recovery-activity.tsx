@@ -24,12 +24,12 @@ type RecoverySession = {
 
 type Props = { hotelId: string; currency: HotelCurrency };
 
-function createDraft(session: RecoverySession) {
+function createDraft(session: RecoverySession, hotelCurrency: HotelCurrency) {
   const dates = session.stayStart && session.stayEnd
     ? ` for ${session.stayStart} to ${session.stayEnd}`
     : '';
   const total = session.quotedTotalCents !== null
-    ? ` The last quoted total was ${formatCents(session.quotedTotalCents, session.currency || 'USD')}.`
+    ? ` The last quoted total was ${formatCents(session.quotedTotalCents, session.currency || hotelCurrency)}.`
     : '';
 
   const opener = 'Hello, thanks for considering our hotel.';
@@ -72,7 +72,7 @@ export function RecoveryActivity({ hotelId, currency }: Props) {
   useEffect(() => { void load(); }, [load]);
 
   const draftSession = sessions.find((session) => session.sessionId === draftSessionId) || null;
-  const draft = draftSession ? createDraft(draftSession) : '';
+  const draft = draftSession ? createDraft(draftSession, currency) : '';
 
   async function copyDraft() {
     if (!draft) return;
