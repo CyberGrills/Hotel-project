@@ -13,7 +13,7 @@ export default function LoginPage() {
     requestedNextPath &&
     requestedNextPath.startsWith('/') &&
     !requestedNextPath.startsWith('//') &&
-    !requestedNextPath.includes('\\\\')
+    !requestedNextPath.includes('\\')
       ? requestedNextPath
       : '/';
 
