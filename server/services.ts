@@ -298,9 +298,6 @@ export async function generateOpportunities(
       dateStr(13),
     );
 
-  const cancelledReservations =
-    await getCancelledReservations(hotelId);
-
   const existingOpps =
     await getOpenOpportunities(hotelId);
 
@@ -517,135 +514,15 @@ export async function generateOpportunities(
 
   /*
    * ==========================================================
-   * 2. ABANDONED BOOKING RECOVERY
+   * 2. CHECKOUT ABANDONMENT
    * ==========================================================
+   *
+   * A cancelled reservation is not an abandoned checkout. Do not
+   * classify or contact cancelled guests as checkout abandoners.
+   * Real funnel abandonment is captured by the recovery_events
+   * ledger and will be promoted to actionable leads only after the
+   * consent-aware recovery queue is fully wired to verified bookings.
    */
-
-  for (
-    const res of
-    cancelledReservations.slice(0, 7)
-  ) {
-    if (
-      !res.cancelled_at ||
-      new Date(res.cancelled_at) <=
-        new Date(
-          Date.now() -
-            2 *
-              24 *
-              60 *
-              60 *
-              1000,
-        )
-    ) {
-      continue;
-    }
-
-    const daysUntilCheckIn =
-      Math.ceil(
-        (
-          new Date(
-            res.check_in_date,
-          ).getTime() -
-          Date.now()
-        ) /
-          (1000 * 60 * 60 * 24),
-      );
-
-    if (daysUntilCheckIn < 0) {
-      continue;
-    }
-
-    const recoveryConfidence = 65;
-
-    const expectedRecoveryValue =
-      Math.round(
-        res.total_amount_cents *
-          (recoveryConfidence / 100),
-      );
-
-    generated.push({
-      hotel_id: hotelId,
-      type: 'ABANDONED_BOOKING',
-      severity:
-        res.total_amount_cents > 50000
-          ? 'HIGH'
-          : 'MEDIUM',
-      reason:
-        `${res.guest_name || 'A guest'} cancelled a ` +
-        `${res.nights}-night booking worth ` +
-        `${formatCentsCompact(
-          res.total_amount_cents,
-          hotel.currency,
-        )}. ` +
-        `The booking remains recoverable because ` +
-        `check-in has not passed.`,
-      room_type_id:
-        res.room_type_id,
-      business_date:
-        res.check_in_date,
-      rooms_affected: 1,
-      expected_value_cents:
-        expectedRecoveryValue,
-      estimated_cost_cents: 200,
-      confidence_pct:
-        recoveryConfidence,
-      recommended_action:
-        'Send personalized direct recovery outreach with a controlled incentive.',
-      status: 'OPEN',
-      evidence: [
-        {
-          label: 'Guest',
-          detail:
-            res.guest_name ||
-            'Unknown',
-        },
-        {
-          label: 'Original booking value',
-          detail:
-            formatCentsCompact(
-              res.total_amount_cents,
-              hotel.currency,
-            ),
-        },
-        {
-          label: 'Expected recovery value',
-          detail:
-            formatCentsCompact(
-              expectedRecoveryValue,
-              hotel.currency,
-            ),
-        },
-        {
-          label: 'Nights',
-          detail:
-            `${res.nights} nights`,
-        },
-        {
-          label: 'Cancelled',
-          detail:
-            new Date(
-              res.cancelled_at,
-            ).toLocaleString(),
-        },
-        {
-          label: 'Check-in',
-          detail:
-            res.check_in_date,
-        },
-      ] as EvidenceItem[],
-      assumptions: [
-        'Guest can still be contacted',
-        'Recovery outreach occurs quickly',
-        '5% recovery incentive',
-        'Direct channel avoids OTA commission',
-      ],
-      expires_at:
-        new Date(
-          Date.now() +
-            24 * 60 * 60 * 1000,
-        ).toISOString(),
-    });
-  }
 
   /*
    * ==========================================================

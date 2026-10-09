@@ -8,7 +8,14 @@ import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextPath = searchParams.get('next') || '/';
+  const requestedNextPath = searchParams.get('next');
+  const nextPath =
+    requestedNextPath &&
+    requestedNextPath.startsWith('/') &&
+    !requestedNextPath.startsWith('//') &&
+    !requestedNextPath.includes('\\')
+      ? requestedNextPath
+      : '/';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

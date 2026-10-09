@@ -11,6 +11,7 @@ import { LoadingState, ErrorState, EmptyState } from '@/components/dashboard/sta
 import { formatCents, formatCentsCompact } from '@/lib/money';
 import { Target, Sparkles, AlertTriangle } from 'lucide-react';
 import type { DashboardData, Hotel } from '@/types';
+import { RecoveryActivity } from '@/components/dashboard/recovery-activity';
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -121,6 +122,8 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      <RecoveryActivity hotelId={data.hotel.id} currency={data.hotel.currency} />
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
